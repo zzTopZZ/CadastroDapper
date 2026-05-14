@@ -1,0 +1,35 @@
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Senha@1234
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./Cadastro.API/Infra/Database/Scripts:/scripts
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      - sqlserver
+    volumes:
+      - ./Cadastro.API/Infra/Database/Scripts:/scripts
+    entrypoint: /bin/bash /scripts/entrypoint.sh
+
+  cadastro-api:
+    build:
+      context: .
+      dockerfile: Cadastro.API/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=DapperCliente;User Id=sa;Password=Senha@1234;TrustServerCertificate=True;
+    depends_on:
+      - sqlserver-init
+
+volumes:
+  sqlserver_data:
