@@ -1,4 +1,5 @@
 using Cadastro.API.DTOs;
+using Cadastro.API.Infra.Common;
 using Cadastro.API.Models;
 using Cadastro.API.Repositories;
 
@@ -13,31 +14,48 @@ public class ClienteService : IClienteService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<ClienteResponse>> ObterTodos()
+    public async Task<Result<IEnumerable<ClienteResponse>>> ObterTodos()
     {
         var clientes = await _repository.ObterTodos();
-        return clientes.Select(ToResponse);
+        return Result<IEnumerable<ClienteResponse>>.Success(clientes.Select(ToResponse));
     }
 
-    public async Task<ClienteResponse?> ObterPorId(int id)
+    public async Task<Result<ClienteResponse>> ObterPorId(int id)
     {
         var cliente = await _repository.ObterPorId(id);
-        return cliente is null ? null : ToResponse(cliente);
+        if (cliente is null)
+            return Result<ClienteResponse>.Failure($"Cliente {id} não encontrado.");
+
+        return Result<ClienteResponse>.Success(ToResponse(cliente));
     }
 
-    public Task<int> Inserir(ClienteRequest request)
+    public async Task<Result<int>> Inserir(ClienteRequest request)
     {
-        return _repository.Inserir(ToModel(request));
+        var id = await _repository.Inserir(ToModel(request));
+        return Result<int>.Success(id);
     }
 
-    public Task Atualizar(int id, ClienteRequest request)
+    public async Task<Result> Atualizar(int id, ClienteRequest request)
     {
-        var cliente = ToModel(request);
-        cliente.Id = id;
-        return _repository.Atualizar(cliente);
+        var cliente = await _repository.ObterPorId(id);
+        if (cliente is null)
+            return Result.Failure($"Cliente {id} não encontrado.");
+
+        var model = ToModel(request);
+        model.Id = id;
+        await _repository.Atualizar(model);
+        return Result.Success();
     }
 
-    public Task Deletar(int id) => _repository.Deletar(id);
+    public async Task<Result> Deletar(int id)
+    {
+        var cliente = await _repository.ObterPorId(id);
+        if (cliente is null)
+            return Result.Failure($"Cliente {id} não encontrado.");
+
+        await _repository.Deletar(id);
+        return Result.Success();
+    }
 
     private static Cliente ToModel(ClienteRequest r) => new()
     {

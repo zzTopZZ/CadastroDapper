@@ -20,35 +20,45 @@ public class ClienteController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> ObterTodos()
     {
-        var clientes = await _service.ObterTodos();
-        return Ok(clientes);
+        var result = await _service.ObterTodos();
+        return result.IsSuccess
+            ? Ok(new { result.Value, result.IsSuccess, result.Error })
+            : BadRequest(new { result.Value, result.IsSuccess, result.Error });
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId(int id)
     {
-        var cliente = await _service.ObterPorId(id);
-        return cliente is null ? NotFound() : Ok(cliente);
+        var result = await _service.ObterPorId(id);
+        return result.IsSuccess
+            ? Ok(new { result.Value, result.IsSuccess, result.Error })
+            : NotFound(new { result.Value, result.IsSuccess, result.Error });
     }
 
     [HttpPost]
     public async Task<IActionResult> Inserir(ClienteRequest request)
     {
-        var id = await _service.Inserir(request);
-        return CreatedAtAction(nameof(ObterPorId), new { id }, null);
+        var result = await _service.Inserir(request);
+        return result.IsSuccess
+            ? CreatedAtAction(nameof(ObterPorId), new { id = result.Value }, new { result.Value, result.IsSuccess, result.Error })
+            : BadRequest(new { result.Value, result.IsSuccess, result.Error });
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Atualizar(int id, ClienteRequest request)
     {
-        await _service.Atualizar(id, request);
-        return NoContent();
+        var result = await _service.Atualizar(id, request);
+        return result.IsSuccess
+            ? Ok(new { result.IsSuccess, Error = (string?)null })
+            : NotFound(new { result.IsSuccess, result.Error });
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Deletar(int id)
     {
-        await _service.Deletar(id);
-        return NoContent();
+        var result = await _service.Deletar(id);
+        return result.IsSuccess
+            ? Ok(new { result.IsSuccess, Error = (string?)null })
+            : NotFound(new { result.IsSuccess, result.Error });
     }
 }

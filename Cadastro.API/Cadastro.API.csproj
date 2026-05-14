@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="Infra\Database\Scripts\" />
     <Folder Include="Infra\Database\Procedures\" />
+    <Folder Include="Infra\Common\" />
     <Folder Include="Models\" />
     <Folder Include="DTOs\" />
     <Folder Include="Repositories\" />
